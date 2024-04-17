@@ -27,7 +27,7 @@ jobs:
           docker push shivani142/projectimage:latest
             
   deploy:
-    name: Deploy to EC2 on main branch push
+    name: Deploy to EC2 on master branch push
     runs-on: ubuntu-latest
   
     steps:
