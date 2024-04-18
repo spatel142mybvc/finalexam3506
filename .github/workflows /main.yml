@@ -1,55 +1,44 @@
-name: Build & Docker Image Build
- 
+name: Deploy React App to EC2
+
 on:
   push:
-    branches: [ main ]
-  pull_request:
-    branches: [ main ]
- 
+    branches:
+      - main  # Set this to your deployment branch
+
 jobs:
-  build:
+  build-and-deploy:
     runs-on: ubuntu-latest
+    
     steps:
-     - name: Checkout code
-       uses: actions/checkout@v3
+    - name: Check out code
+      uses: actions/checkout@v3
 
-     - name: Build the Docker image
-       run: docker build . --file Dockerfile --tag shivani142/projectimage:latest
- 
-     - name: Login to Dockerhub
-       uses: docker/login-action@v1
-       with:
-         username: ${{ secrets.DOC_USERNAME }}
-         password: ${{ secrets.DOC_PASSWORD }}
- 
-     - name: Push Docker image to Docker Hub
-       run: |
-          docker push shivani142/projectimage:latest
-            
-  deploy:
-    name: Deploy to EC2 on master branch push
-    runs-on: ubuntu-latest
-  
-    steps:
-      - name: Checkout the files
-        uses: actions/checkout@v2
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v1
 
-      - name: Deploy to Server 1
-        uses: easingthemes/ssh-deploy@main
-        env:
-          SSH_PRIVATE_KEY: ${{ secrets.EC2_SSH_KEY }}
-          REMOTE_HOST: ${{ secrets.HOST_DNS }}
-          REMOTE_USER: ${{ secrets.USERNAME }}
-          TARGET: ${{ secrets.TARGET_DIR }}
+    - name: Log in to Docker Hub
+      uses: docker/login-action@v1
+      with:
+        username: ${{ secrets.DOCKER_HUB_USERNAME }}
+        password: ${{ secrets.DOCKER_HUB_PASSWORD }}
 
-      - name: Executing remote ssh commands using ssh key
-        uses: appleboy/ssh-action@master
-        with:
-          host: ${{ secrets.HOST_DNS }}
-          username: ${{ secrets.USERNAME }}
-          key: ${{ secrets.EC2_SSH_KEY }}
-          script: |
-            docker pull shivani142/projectimage:latest
-            docker stop projectimage && docker rm projectimage
-            docker run -d -p 80:80 --name projectimage shivani142/projectimage:latest
-            docker image prune -f
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v2
+      with:
+        context: .
+        file: Dockerfile
+        push: true
+        tags: jaypatel132/healthcare-app:${{ github.sha }}
+
+    - name: Deploy on EC2
+      uses: appleboy/ssh-action@master
+      with:
+        host: ${{ secrets.EC2_HOST }}
+        username: ${{ secrets.EC2_USERNAME }}
+        key: ${{ secrets.EC2_SSH_KEY }}
+        port: ${{ secrets.EC2_PORT }}
+        script: |
+          docker pull jaypatel132/healthcare-app:${{ github.sha }}
+          docker stop healthcare-app || true
+          docker rm healthcare-app || true
+          docker run -d --name healthcare-app -p 80:80 jaypatel132/healthcare-app:${{ github.sha }}
