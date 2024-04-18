@@ -1,8 +1,8 @@
-FROM httpd:2.4
+# Use the official Nginx image as the base image
+FROM nginx:alpine
 
+# Copy all files from the current directory into the Nginx server directory
+COPY . /usr/share/nginx/html
 
-COPY *.html /usr/local/apache2/htdocs/
-RUN mkdir -p /usr/local/apache2/htdocs/css
-RUN mkdir -p /usr/local/apache2/htdocs/images
-COPY ./css/* /usr/local/apache2/htdocs/
-COPY ./images/* /usr/local/apache2/htdocs/images
+# Expose port 80 to the outside world
+EXPOSE 80
