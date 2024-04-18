@@ -28,7 +28,7 @@ jobs:
         context: .
         file: Dockerfile
         push: true
-        tags: jaypatel132/healthcare-app:${{ github.sha }}
+        tags: shivani142/healthcare-website:${{ github.sha }}
 
     - name: Deploy on EC2
       uses: appleboy/ssh-action@master
@@ -38,7 +38,7 @@ jobs:
         key: ${{ secrets.EC2_SSH_KEY }}
         port: ${{ secrets.EC2_PORT }}
         script: |
-          docker pull jaypatel132/healthcare-app:${{ github.sha }}
-          docker stop healthcare-app || true
-          docker rm healthcare-app || true
-          docker run -d --name healthcare-app -p 80:80 jaypatel132/healthcare-app:${{ github.sha }}
+          docker pull shivani142/healthcare-website:${{ github.sha }}
+          docker stop healthcare-website || true
+          docker rm healthcare-website || true
+          docker run -d --name healthcare-website -p 80:80 shivani142/healthcare-website:${{ github.sha }}
